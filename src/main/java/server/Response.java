@@ -31,9 +31,8 @@ public class Response {
         String absoluteResourcePath="";
         String absolutePath = StaticResourceUtil.getAbsolutePath(path);
         String substring = absolutePath.substring(1);
-        log.info("绝对路径是"+absolutePath);
         File file=new File(substring);
-        if (file.exists()){
+        if (file.exists() && file.isFile()){
             StaticResourceUtil.outputStaticResource(new FileInputStream(file),outputStream);
             //使用工具类读取文件
         }else {
