@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
-import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
 
 import java.io.IOException;
@@ -30,7 +29,7 @@ public class Bootstrap {
 
 
         log.info("Minicat start on port "+ port );
-        ServerSocket socket=new ServerSocket(port);
+        ServerSocket socket = new ServerSocket(port);
 //        while (true){
 //            Socket accept = socket.accept();
 //            OutputStream outputStream = accept.getOutputStream();
@@ -40,20 +39,26 @@ public class Bootstrap {
 //            outputStream.write(responseText.getBytes());
 //            accept.close();
 //        }
-
-        while (true){
+//
+//        while (true){
+//            Socket accept = socket.accept();
+//            InputStream inputStream = accept.getInputStream();
+//            Request request=new Request(inputStream);
+//            Response response=new Response(accept.getOutputStream());
+//            log.info("路径是===============》"+request.getUrl());
+//            if (servletMap.get(request.getUrl())==null){
+//                response.outputHtml(request.getUrl());
+//            }else {
+//                HttpServlet httpServlet = servletMap.get(request.getUrl());
+//                httpServlet.service(request,response);
+//            }
+//            accept.close();
+//        }
+        //多线程改造(不使用线程池的情况下)
+        while (true) {
             Socket accept = socket.accept();
-            InputStream inputStream = accept.getInputStream();
-            Request request=new Request(inputStream);
-            Response response=new Response(accept.getOutputStream());
-            log.info("路径是===============》"+request.getUrl());
-            if (servletMap.get(request.getUrl())==null){
-                response.outputHtml(request.getUrl());
-            }else {
-                HttpServlet httpServlet = servletMap.get(request.getUrl());
-                httpServlet.service(request,response);
-            }
-            accept.close();
+            RequestsProcessor requestsProcessor = new RequestsProcessor(accept, servletMap);
+            requestsProcessor.start();
         }
     }
     private Map<String , HttpServlet> servletMap=new HashMap<>();
