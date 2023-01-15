@@ -14,20 +14,21 @@ public class Bootstrap {
     public int getPort() {
         return port;
     }
-
     public void setPort(int port) {
         this.port = port;
     }
     public void start() throws IOException {
         log.info("Minicat start on port "+ port );
+        ServerSocket socket=new ServerSocket(port);
         while (true){
-            ServerSocket socket=new ServerSocket(port);
             Socket accept = socket.accept();
             OutputStream outputStream = accept.getOutputStream();
-            outputStream.write("Hello MiniCat".getBytes());
-            socket.close();
+            String data="Hello MiniCat";
+            String responseText = HttpProtocolUtil.getHttpHeader200(data.getBytes().length) + data;
+            log.info("\n\r"+responseText);
+            outputStream.write(responseText.getBytes());
+            accept.close();
         }
-
     }
 
 
