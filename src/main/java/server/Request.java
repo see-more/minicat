@@ -1,6 +1,5 @@
 package server;
 
-import com.sun.org.apache.regexp.internal.RE;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -55,7 +54,7 @@ public class Request {
         String[] strings= firstLine.split(" ");
         this.method=strings[0];
         this.url=strings[1];
-        log.info("请求方式======>\r\n"+method);
-        log.info("请求路径======>\r\n"+url);
+        log.info("请求方式为"+method);
+        log.info("请求的路径是"+url);
     }
 }

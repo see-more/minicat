@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<web-app>
+    <servlet>
+        <servlet-name>trom</servlet-name>
+        <servlet-class>server.TromSevlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>trom</servlet-name>
+        <url-pattern>/trom</url-pattern>
+    </servlet-mapping>
+</web-app>

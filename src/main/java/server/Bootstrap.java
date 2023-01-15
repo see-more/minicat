@@ -1,13 +1,19 @@
 package server;
 
-
 import lombok.extern.slf4j.Slf4j;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.Node;
+import org.dom4j.io.SAXReader;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class Bootstrap {
@@ -18,7 +24,11 @@ public class Bootstrap {
     public void setPort(int port) {
         this.port = port;
     }
-    public void start() throws IOException {
+    public void start() throws Exception {
+
+        loadServlet();
+
+
         log.info("Minicat start on port "+ port );
         ServerSocket socket=new ServerSocket(port);
 //        while (true){
@@ -36,19 +46,58 @@ public class Bootstrap {
             InputStream inputStream = accept.getInputStream();
             Request request=new Request(inputStream);
             Response response=new Response(accept.getOutputStream());
-            log.info(request.getUrl());
-            response.outputHtml(request.getUrl());
+            log.info("路径是===============》"+request.getUrl());
+            if (servletMap.get(request.getUrl())==null){
+                response.outputHtml(request.getUrl());
+            }else {
+                HttpServlet httpServlet = servletMap.get(request.getUrl());
+                httpServlet.service(request,response);
+            }
             accept.close();
         }
     }
+    private Map<String , HttpServlet> servletMap=new HashMap<>();
+    /*
+    加载接卸web.xml初始化
+    */
+    private void loadServlet(){
+        InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("web.xml");
+        SAXReader saxReader = new SAXReader();
+        try {
+            Document document=saxReader.read(resourceAsStream);
+            Element rootElement = document.getRootElement();
+            List<Element> list = rootElement.selectNodes("//servlet");
+            for (int i = 0; i < list.size(); i++) {
+                Element element=list.get(i);
+                Element servletnameElement = (Element) element.selectSingleNode("servlet-name");
+                String servletName=servletnameElement.getStringValue();
+                Element servletClassElement = (Element) element.selectSingleNode("servlet-class");
+                String servletClass=servletClassElement.getStringValue();
+                Element servletMapping = (Element) rootElement.selectSingleNode("/web-app/servlet-mapping[servlet-name='"+servletName+"']");
+                String urlPattern = servletMapping.selectSingleNode("url-pattern").getStringValue();
+                servletMap.put(urlPattern, (HttpServlet) Class.forName(servletClass).newInstance());
+                log.info("动态资源映射成功");
+            }
+        } catch (DocumentException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
 
-
-
+    }
     /*
     * minicat的启动入口
     * */
     public static void main(String[] args) throws IOException {
         Bootstrap bootstrap = new Bootstrap();
-        bootstrap.start();
+        try {
+            bootstrap.start();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
