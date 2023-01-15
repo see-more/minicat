@@ -13,6 +13,7 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.*;
 
 @Slf4j
 public class Bootstrap {
@@ -27,8 +28,25 @@ public class Bootstrap {
 
         loadServlet();
 
+        int corePoolSize = 10;
+        int maximumPoolSize = 50;
+        long keepAliveTime = 100L;
+        TimeUnit unit = TimeUnit.SECONDS;
+        BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(50);
+        ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.AbortPolicy();
 
-        log.info("Minicat start on port "+ port );
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+                corePoolSize,
+                maximumPoolSize,
+                keepAliveTime,
+                unit,
+                workQueue,
+                threadFactory,
+                handler
+        );
+
+        log.info("Minicat start on port " + port);
         ServerSocket socket = new ServerSocket(port);
 //        while (true){
 //            Socket accept = socket.accept();
@@ -55,10 +73,17 @@ public class Bootstrap {
 //            accept.close();
 //        }
         //多线程改造(不使用线程池的情况下)
+//        while (true) {
+//            Socket accept = socket.accept();
+//            RequestsProcessor requestsProcessor = new RequestsProcessor(accept, servletMap);
+//            requestsProcessor.start();
+//        }
+        //使用线程池
         while (true) {
             Socket accept = socket.accept();
             RequestsProcessor requestsProcessor = new RequestsProcessor(accept, servletMap);
-            requestsProcessor.start();
+            threadPoolExecutor.execute(requestsProcessor);
+//            requestsProcessor.start();
         }
     }
     private Map<String , HttpServlet> servletMap=new HashMap<>();
